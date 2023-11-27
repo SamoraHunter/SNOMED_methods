@@ -369,25 +369,27 @@ class snomed_relations:
         
         return df
     
+
     
-    
-    def retrieve_search_synonyms(filter_root_cui, snomed_relations_obj, n_recursion=10, context_type='xxxlong', type_id_filter=[], topn=50, debug=False):
+
+    def retrieve_search_synonyms(self, filter_root_cui, n_recursion=10, context_type='xxxlong', type_id_filter=[], topn=50, debug=False, use_snomed=True, use_medcat=True):
         # Initialize a list to store names
         all_names = []
 
-        # Retrieve data for snomed_tree
-        retrieved_codes_snomed_tree, retrieved_names_snomed_tree = snomed_relations_obj.recursive_code_expansion(filter_root_cui, n_recursion=n_recursion, debug=debug)
+        # Retrieve data for snomed_tree if use_snomed is True
+        retrieved_codes_snomed_tree, retrieved_names_snomed_tree = ([], []) if not use_snomed else self.recursive_code_expansion(filter_root_cui, n_recursion=n_recursion, debug=debug)
 
         # Add names to the list, stripping anything in parentheses
         all_names.extend([re.sub(r'\([^)]*\)', '', name).strip() for name in retrieved_names_snomed_tree if name is not None])
 
-        # Retrieve data for medcat_cdb
-        retrieved_codes_medcat_cdb, retrieved_names_medcat_cdb = snomed_relations_obj.get_medcat_cdb_most_similar(filter_root_cui, context_type=context_type, type_id_filter=type_id_filter, topn=topn)
+        # Retrieve data for medcat_cdb if use_medcat is True
+        retrieved_codes_medcat_cdb, retrieved_names_medcat_cdb = ([], []) if not use_medcat else self.get_medcat_cdb_most_similar(filter_root_cui, context_type=context_type, type_id_filter=type_id_filter, topn=topn)
 
         # Add names to the list, stripping anything in parentheses
         all_names.extend([re.sub(r'\([^)]*\)', '', name).strip() for name in retrieved_names_medcat_cdb if name is not None])
 
         return retrieved_codes_snomed_tree, retrieved_names_snomed_tree, retrieved_codes_medcat_cdb, retrieved_names_medcat_cdb, all_names
+
 
 
 
