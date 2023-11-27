@@ -1,8 +1,11 @@
 
-import os, sys
-import pandas as pd
+import os
+import sys
+
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
+
 
 class snomed_relations:
     
@@ -363,3 +366,43 @@ class snomed_relations:
             df[f'{elem}_concept_sim'] = self.get_medcat_similar_score(elem, target_cui_list, debug=True)
         
         return df
+    
+    
+    
+    def retrieve_search_synonyms(filter_root_cui, snomed_relations_obj, n_recursion=10, context_type='xxxlong', type_id_filter=[], topn=50, debug=False):
+        # Initialize a list to store names
+        all_names = []
+
+        # Retrieve data for snomed_tree
+        retrieved_codes_snomed_tree, retrieved_names_snomed_tree = snomed_relations_obj.recursive_code_expansion(filter_root_cui, n_recursion=n_recursion, debug=debug)
+
+        # Add names to the list, stripping anything in parentheses
+        all_names.extend([re.sub(r'\([^)]*\)', '', name).strip() for name in retrieved_names_snomed_tree if name is not None])
+
+        # Retrieve data for medcat_cdb
+        retrieved_codes_medcat_cdb, retrieved_names_medcat_cdb = snomed_relations_obj.get_medcat_cdb_most_similar(filter_root_cui, context_type=context_type, type_id_filter=type_id_filter, topn=topn)
+
+        # Add names to the list, stripping anything in parentheses
+        all_names.extend([re.sub(r'\([^)]*\)', '', name).strip() for name in retrieved_names_medcat_cdb if name is not None])
+
+        return retrieved_codes_snomed_tree, retrieved_names_snomed_tree, retrieved_codes_medcat_cdb, retrieved_names_medcat_cdb, all_names
+
+
+
+
+    def get_snowstorm_response_children(cui):
+        url = f"https://snowstorm.ihtsdotools.org/snowstorm/snomed-ct/browser/MAIN%2FSNOMEDCT-GB/concepts/{cui}/children?form=inferred&includeDescendantCount=false"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+            # Add other headers if required
+        }
+        
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            return response.text
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            return None
+
