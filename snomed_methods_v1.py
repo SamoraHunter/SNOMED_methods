@@ -2,6 +2,7 @@
 import os
 import re
 import sys
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -11,7 +12,7 @@ from tqdm import tqdm
 
 class snomed_relations:
     
-    def __init__(self, medcat = False, snowstorm=False, aliencat = False, dgx = False, dhcap=False, dhcap02 = True):
+    def __init__(self, medcat = False, snowstorm=False, aliencat = False, dgx = False, dhcap=False, dhcap02 = True, snomed_rf2_full_path = None):
         
         
         sys.path.insert(0,'/home/aliencat/samora/gloabl_files')
@@ -19,7 +20,13 @@ class snomed_relations:
         sys.path.insert(0,'/home/jovyan/work/gloabl_files')
         sys.path.insert(0, '/home/cogstack/samora/_data/gloabl_files')
         
-        self.df = pd.read_csv('/home/cogstack/samora/_data/snomed/SnomedCT_InternationalRF2_PRODUCTION_20231101T120000Z/Full/Terminology/sct2_StatedRelationship_Full_INT_20231101.txt', sep='\t', header=0)
+        if(snomed_rf2_full_path is None):
+            self.df = pd.read_csv('/home/cogstack/samora/_data/snomed/SnomedCT_InternationalRF2_PRODUCTION_20231101T120000Z/Full/Terminology/sct2_StatedRelationship_Full_INT_20231101.txt', sep='\t', header=0)
+        else:
+            try:
+                self.df = pd.read_csv(snomed_rf2_full_path)
+            except Exception as e:
+                print("failed to read snomed file, looking for file like sct2_StatedRelationship_Full_INT_20231101.txt")
         
         self.medcat = medcat
         
@@ -390,6 +397,67 @@ class snomed_relations:
 
         return retrieved_codes_snomed_tree, retrieved_names_snomed_tree, retrieved_codes_medcat_cdb, retrieved_names_medcat_cdb, all_names
 
+
+    def retrieve_search_synonyms_multi(self, filter_root_cui_list: List[str], n_recursion: int = 10, context_type: str = 'xxxlong', type_id_filter: List[int] = [], topn: int = 50, debug: bool = False, use_snomed: bool = True, use_medcat: bool = True) -> Tuple[List[List[str]], List[List[str]], List[List[str]], List[List[str]], List[str], List[str]]:
+        """
+        Retrieves search synonyms for multiple filter_root_cui values.
+
+        Args:
+            filter_root_cui_list (List[str]): List of filter_root_cui values to retrieve search synonyms for.
+            n_recursion (int, optional): Number of recursion levels for code expansion. Defaults to 10.
+            context_type (str, optional): Type of context. Defaults to 'xxxlong'.
+            type_id_filter (List[int], optional): List of type IDs for filtering. Defaults to [].
+            topn (int, optional): Top N results to retrieve. Defaults to 50.
+            debug (bool, optional): Enable debugging. Defaults to False.
+            use_snomed (bool, optional): Use SNOMED for retrieval. Defaults to True.
+            use_medcat (bool, optional): Use MedCAT for retrieval. Defaults to True.
+
+        Returns:
+            Tuple[List[List[str]], List[List[str]], List[List[str]], List[List[str]], List[str], List[str]]: A tuple containing:
+                - List of retrieved codes from SNOMED for each filter_root_cui.
+                - List of retrieved names from SNOMED for each filter_root_cui.
+                - List of retrieved codes from MedCAT for each filter_root_cui.
+                - List of retrieved names from MedCAT for each filter_root_cui.
+                - Flat list of all retrieved names.
+                - Flat list of all retrieved codes.
+        """
+        # Initialize lists to store results
+        all_retrieved_codes_snomed_tree = []
+        all_retrieved_names_snomed_tree = []
+        all_retrieved_codes_medcat_cdb = []
+        all_retrieved_names_medcat_cdb = []
+        all_names = []
+        all_codes = []  # New list to store all codes
+
+        # Iterate over each filter_root_cui in the list
+        for filter_root_cui in filter_root_cui_list:
+            # Retrieve data for snomed_tree if use_snomed is True
+            retrieved_codes_snomed_tree, retrieved_names_snomed_tree = ([], []) if not use_snomed else self.recursive_code_expansion(filter_root_cui, n_recursion=n_recursion, debug=debug)
+
+            # Add retrieved data to the lists
+            all_retrieved_codes_snomed_tree.append(retrieved_codes_snomed_tree)
+            all_retrieved_names_snomed_tree.append(retrieved_names_snomed_tree)
+
+            # Add names to the all_names list, stripping anything in parentheses
+            all_names.extend([re.sub(r'\([^)]*\)', '', name).strip() for name in retrieved_names_snomed_tree if name is not None])
+
+            # Add codes to the all_codes list
+            all_codes.extend(retrieved_codes_snomed_tree)
+
+            # Retrieve data for medcat_cdb if use_medcat is True
+            retrieved_codes_medcat_cdb, retrieved_names_medcat_cdb = ([], []) if not use_medcat else self.get_medcat_cdb_most_similar(filter_root_cui, context_type=context_type, type_id_filter=type_id_filter, topn=topn)
+
+            # Add retrieved data to the lists
+            all_retrieved_codes_medcat_cdb.append(retrieved_codes_medcat_cdb)
+            all_retrieved_names_medcat_cdb.append(retrieved_names_medcat_cdb)
+
+            # Add names to the all_names list, stripping anything in parentheses
+            all_names.extend([re.sub(r'\([^)]*\)', '', name).strip() for name in retrieved_names_medcat_cdb if name is not None])
+
+            # Add codes to the all_codes list
+            all_codes.extend(retrieved_codes_medcat_cdb)
+
+        return all_retrieved_codes_snomed_tree, all_retrieved_names_snomed_tree, all_retrieved_codes_medcat_cdb, all_retrieved_names_medcat_cdb, all_names, all_codes
 
 
 
