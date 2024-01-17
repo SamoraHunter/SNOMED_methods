@@ -24,7 +24,7 @@ class snomed_relations:
             self.df = pd.read_csv('/home/cogstack/samora/_data/snomed/SnomedCT_InternationalRF2_PRODUCTION_20231101T120000Z/Full/Terminology/sct2_StatedRelationship_Full_INT_20231101.txt', sep='\t', header=0)
         else:
             try:
-                self.df = pd.read_csv(snomed_rf2_full_path)
+                self.df = pd.read_csv(snomed_rf2_full_path, sep='\t', header=0)
             except Exception as e:
                 print("failed to read snomed file, looking for file like sct2_StatedRelationship_Full_INT_20231101.txt")
         
