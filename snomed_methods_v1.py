@@ -456,6 +456,9 @@ class snomed_relations:
 
             # Add codes to the all_codes list
             all_codes.extend(retrieved_codes_medcat_cdb)
+            
+            all_codes = [str(code) for code in all_codes]
+
 
         return all_retrieved_codes_snomed_tree, all_retrieved_names_snomed_tree, all_retrieved_codes_medcat_cdb, all_retrieved_names_medcat_cdb, all_names, all_codes
 
