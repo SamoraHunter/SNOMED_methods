@@ -23,10 +23,6 @@ class snomed_relations:
         medcat_path=None,
     ):
 
-        sys.path.insert(0, "/home/aliencat/samora/gloabl_files")
-        sys.path.insert(0, "/data/AS/Samora/gloabl_files")
-        sys.path.insert(0, "/home/jovyan/work/gloabl_files")
-        sys.path.insert(0, "/home/samorah/_data/gloabl_files")
         sys.path.insert(0, "..")
 
         if snomed_rf2_full_path is None:
@@ -325,6 +321,26 @@ class snomed_relations:
         names = self.get_pretty_name_list(codes)
 
         return codes, names
+
+
+    def build_lists_medcat_snomedtree(self, input_list, medcat=False, snomed=True):
+        retrieved_codes = []
+        retrieved_names = []
+
+        if(snomed):
+            for item in input_list:
+                codes, names = self.recursive_code_expansion(item)
+                retrieved_codes.extend(codes)
+                retrieved_names.extend(names)
+
+        if(medcat):
+            for item in input_list:
+                codes, names = self.get_medcat_cdb_most_similar(item)
+                retrieved_codes.extend(codes)
+                retrieved_names.extend(names)
+
+        return retrieved_codes, retrieved_names
+
 
         # type-id t-16 etc
         # {T-38}    198890
