@@ -26,6 +26,22 @@ class snomed_relations:
         sys.path.insert(0, "..")
 
         if snomed_rf2_full_path is None:
+
+            current_dir = os.getcwd()
+
+            os.path.abspath(
+                os.path.join(
+                    current_dir,
+                    "..",
+                    "snomed",
+                    "SnomedCT_InternationalRF2_PRODUCTION_20231101T120000Z",
+                    "SnomedCT_InternationalRF2_PRODUCTION_20231101T120000Z",
+                    "Full",
+                    "Terminology",
+                    "sct2_StatedRelationship_Full_INT_20231101.txt",
+                )
+            )
+
             self.df = pd.read_csv(
                 "/home/cogstack/samora/_data/snomed/SnomedCT_InternationalRF2_PRODUCTION_20231101T120000Z/Full/Terminology/sct2_StatedRelationship_Full_INT_20231101.txt",
                 sep="\t",
@@ -322,18 +338,17 @@ class snomed_relations:
 
         return codes, names
 
-
     def build_lists_medcat_snomedtree(self, input_list, medcat=False, snomed=True):
         retrieved_codes = []
         retrieved_names = []
 
-        if(snomed):
+        if snomed:
             for item in input_list:
                 codes, names = self.recursive_code_expansion(item)
                 retrieved_codes.extend(codes)
                 retrieved_names.extend(names)
 
-        if(medcat):
+        if medcat:
             for item in input_list:
                 codes, names = self.get_medcat_cdb_most_similar(item)
                 retrieved_codes.extend(codes)
@@ -342,7 +357,6 @@ class snomed_relations:
         retrieved_codes = [int(code) for code in retrieved_codes]
 
         return retrieved_codes, retrieved_names
-
 
         # type-id t-16 etc
         # {T-38}    198890
