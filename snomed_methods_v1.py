@@ -339,6 +339,8 @@ class snomed_relations:
                 retrieved_codes.extend(codes)
                 retrieved_names.extend(names)
 
+        retrieved_codes = [int(code) for code in retrieved_codes]
+
         return retrieved_codes, retrieved_names
 
 
